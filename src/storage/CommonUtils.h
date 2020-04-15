@@ -15,17 +15,45 @@
 #include "meta/SchemaManager.h"
 #include "meta/IndexManager.h"
 #include "meta/SchemaManager.h"
+#include <folly/AtomicHashMap.h>
 
 namespace nebula {
 namespace storage {
 
 using VertexCache = ConcurrentLRUCache<std::pair<VertexID, TagID>, std::string>;
 
+enum class IndexStatus {
+    NORMAL       = 0x00,
+    LOCKING      = 0x01,
+    IN_BUILDING  = 0x02,
+};
+
 class StorageEnv {
+public:
+    StorageEnv() {}
+
+    void setRebuildPartition(int32_t partsNum) {
+        rebuildPartID_ = new folly::AtomicHashMap<PartitionID, bool>(partsNum);
+    }
+
+    void cleanupRebuildInfo() {
+        rebuildPartID_->clear();
+        rebuildTagID_ = -1;
+        rebuildEdgeType_ = -1;
+        rebuildIndexID_ = -1;
+    }
+
 public:
     kvstore::KVStore*                               kvstore_{nullptr};
     meta::SchemaManager*                            schemaMan_{nullptr};
     meta::IndexManager*                             indexMan_{nullptr};
+
+    std::atomic<GraphSpaceID>                       rebuildSpaceID_{-1};
+    folly::AtomicHashMap<PartitionID, bool>*        rebuildPartID_;
+    std::atomic<TagID>                              rebuildTagID_{-1};
+    std::atomic<EdgeType>                           rebuildEdgeType_{-1};
+    std::atomic<IndexID>                            rebuildIndexID_{-1};
+    IndexStatus                                     status_{IndexStatus::NORMAL};
 };
 
 class CommonUtils final {

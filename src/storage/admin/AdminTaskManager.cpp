@@ -14,9 +14,6 @@ DEFINE_uint32(max_concurrent_subtasks, 10, "The sub tasks could be invoked simul
 namespace nebula {
 namespace storage {
 
-using ResultCode = nebula::kvstore::ResultCode;
-using TaskHandle = std::pair<int, int>;     // jobid + taskid
-
 bool AdminTaskManager::init() {
     LOG(INFO) << "max concurrenct subtasks: " << FLAGS_max_concurrent_subtasks;
     pool_ = std::make_unique<ThreadPool>(FLAGS_max_concurrent_subtasks);
@@ -32,9 +29,6 @@ bool AdminTaskManager::init() {
 
 void AdminTaskManager::addAsyncTask(std::shared_ptr<AdminTask> task) {
     TaskHandle handle = std::make_pair(task->getJobId(), task->getTaskId());
-    LOG(INFO) << folly::stringPrintf("try enqueue task(%d, %d), con req=%zu",
-                                     task->getJobId(), task->getTaskId(),
-                                     task->getConcurrentReq());
     tasks_.insert(handle, task);
     taskQueue_.add(handle);
     LOG(INFO) << folly::stringPrintf("enqueue task(%d, %d), con req=%zu",
@@ -123,6 +117,7 @@ void AdminTaskManager::schedule() {
         }
 
         auto subTasks = nebula::value(errOrSubTasks);
+        task->subTaskStatus_ = new folly::AtomicHashMap<int32_t, cpp2::ErrorCode>(subTasks.size());
         for (auto& subtask : subTasks) {
             task->subtasks_.add(subtask);
         }
@@ -158,8 +153,7 @@ void AdminTaskManager::runSubTask(TaskHandle handle) {
         }
 
         if (0 == --task->unFinishedSubTask_) {
-            FLOG_INFO("task(%d, %d) finished", task->getJobId(),
-                                                task->getTaskId());
+            FLOG_INFO("task(%d, %d) finished", task->getJobId(), task->getTaskId());
             task->finish();
             tasks_.erase(handle);
         } else {
@@ -168,6 +162,17 @@ void AdminTaskManager::runSubTask(TaskHandle handle) {
     } else {
         FLOG_INFO("task(%d, %d) runSubTask() exit", handle.first, handle.second);
     }
+}
+
+bool AdminTaskManager::isFinished(int /*jobID*/, int /*taskID*/) {
+    // for (size_t i = 0; i < tasks_.find(std::make_pair(jobID, taskID))
+    // ->second->subTaskStatus_->size(); i++) {
+        // if (subTaskStatus_->find(i).second == SUCC) {
+
+        // }
+    // }
+
+    return true;
 }
 
 }  // namespace storage

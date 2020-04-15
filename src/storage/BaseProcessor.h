@@ -8,6 +8,7 @@
 #define STORAGE_BASEPROCESSOR_H_
 
 #include "base/Base.h"
+#include "common/Types.h"
 #include <folly/SpinLock.h>
 #include <folly/futures/Promise.h>
 #include <folly/futures/Future.h>
@@ -64,6 +65,10 @@ protected:
 
     void doRemove(GraphSpaceID spaceId, PartitionID partId, std::vector<std::string> keys);
 
+    kvstore::ResultCode doSyncRemove(GraphSpaceID spaceId,
+                                     PartitionID partId,
+                                     std::vector<std::string> keys);
+
     cpp2::ErrorCode to(kvstore::ResultCode code);
 
     nebula::meta::cpp2::ColumnDef columnDef(std::string name,
@@ -82,6 +87,9 @@ protected:
     StatusOr<std::string> encodeRowVal(const meta::NebulaSchemaProvider* schema,
                                        const std::vector<std::string>& propNames,
                                        const std::vector<Value>& props);
+
+    StatusOr<IndexValues> collectIndexValues(RowReader* reader,
+                                             const std::vector<meta::cpp2::ColumnDef>& cols);
 
 protected:
     StorageEnv*                                     env_{nullptr};

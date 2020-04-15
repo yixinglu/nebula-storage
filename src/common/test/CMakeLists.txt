@@ -5,6 +5,7 @@ nebula_add_test(
         NebulaKeyUtilsTest.cpp
     OBJECTS
         $<TARGET_OBJECTS:keyutils_obj>
+        $<TARGET_OBJECTS:common_time_obj>
     LIBRARIES
         gtest
 )
@@ -17,6 +18,7 @@ nebula_add_test(
     OBJECTS
         $<TARGET_OBJECTS:keyutils_obj>
         $<TARGET_OBJECTS:common_base_obj>
+        $<TARGET_OBJECTS:common_time_obj>
         $<TARGET_OBJECTS:common_datatypes_obj>
     LIBRARIES
         gtest

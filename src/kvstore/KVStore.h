@@ -23,9 +23,6 @@ namespace nebula {
 namespace kvstore {
 
 struct KVOptions {
-    // HBase thrift server address.
-    HostAddr hbaseServer_;
-
     // SchemaManager instance, help the hbasestore to encode/decode data.
     std::unique_ptr<meta::SchemaManager> schemaMan_{nullptr};
 

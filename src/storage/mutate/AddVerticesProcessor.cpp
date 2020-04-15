@@ -18,6 +18,7 @@ namespace nebula {
 namespace storage {
 
 void AddVerticesProcessor::process(const cpp2::AddVerticesRequest& req) {
+    CHECK_NOTNULL(env_->kvstore_);
     auto version =
         std::numeric_limits<int64_t>::max() - time::WallClock::fastNowInMicroSec();
     // Switch version to big-endian, make sure the key is in ordered.

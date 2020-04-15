@@ -9,12 +9,9 @@
 
 #include "base/Base.h"
 #include "base/StatusOr.h"
-#include "interface/gen-cpp2/meta_types.h"
 #include "common/Types.h"
 
 namespace nebula {
-
-using IndexValues = std::vector<std::pair<Value::Type, std::string>>;
 
 /**
  * This class supply some utils for index in kvstore.

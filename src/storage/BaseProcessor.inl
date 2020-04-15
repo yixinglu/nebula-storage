@@ -5,6 +5,7 @@
  */
 
 #include "base/Base.h"
+#include "common/IndexKeyUtils.h"
 #include "storage/BaseProcessor.h"
 #include "codec/RowWriterV2.h"
 
@@ -183,6 +184,41 @@ BaseProcessor<RESP>::encodeRowVal(const meta::NebulaSchemaProvider* schema,
     }
 
     return std::move(rowWrite).moveEncodedStr();
+}
+
+template <typename RESP>
+kvstore::ResultCode BaseProcessor<RESP>::doSyncRemove(GraphSpaceID spaceId,
+                                                      PartitionID partId,
+                                                      std::vector<std::string> keys) {
+    folly::Baton<true, std::atomic> baton;
+    auto ret = kvstore::ResultCode::SUCCEEDED;
+    this->env_kvstore_->asyncMultiRemove(spaceId,
+                                         partId,
+                                         std::move(keys),
+                                         [&ret, &baton] (kvstore::ResultCode code) {
+        if (kvstore::ResultCode::SUCCEEDED != code) {
+            ret = code;
+        }
+        baton.post();
+    });
+    baton.wait();
+    return ret;
+}
+
+template <typename RESP>
+StatusOr<IndexValues>
+BaseProcessor<RESP>::collectIndexValues(RowReader* reader,
+                                        const std::vector<nebula::meta::cpp2::ColumnDef>& cols) {
+    IndexValues values;
+    if (reader == nullptr) {
+        return values;
+    }
+    for (auto& col : cols) {
+        auto value = reader->getValueByName(col.get_name());
+        auto encodeValue = IndexKeyUtils::encodeValue(std::move(value));
+        values.emplace_back(value.type(), std::move(encodeValue));
+    }
+    return values;
 }
 
 }  // namespace storage

@@ -15,30 +15,22 @@ namespace storage {
 
 extern ProcessorCounters kLookupCounters;
 
-class LookupProcessor
-    : public LookupBaseProcessor<cpp2::LookupIndexRequest, cpp2::LookupIndexResp> {
+class LookupProcessor : public LookupBaseProcessor<cpp2::LookupIndexRequest, cpp2::LookupIndexResp> {
+ public:
+  static LookupProcessor* instance(StorageEnv* env, const ProcessorCounters* counters = &kLookupCounters,
+                                   folly::Executor* executor = nullptr, VertexCache* cache = nullptr) {
+    return new LookupProcessor(env, counters, executor, cache);
+  }
 
-public:
-    static LookupProcessor* instance(StorageEnv* env,
-                                     const ProcessorCounters* counters = &kLookupCounters,
-                                     folly::Executor* executor = nullptr,
-                                     VertexCache* cache = nullptr) {
-        return new LookupProcessor(env, counters, executor, cache);
-    }
+  void process(const cpp2::LookupIndexRequest& req) override;
 
-    void process(const cpp2::LookupIndexRequest& req) override;
+  void doProcess(const cpp2::LookupIndexRequest& req);
 
-    void doProcess(const cpp2::LookupIndexRequest& req);
+ protected:
+  LookupProcessor(StorageEnv* env, const ProcessorCounters* counters, folly::Executor* executor, VertexCache* cache)
+      : LookupBaseProcessor<cpp2::LookupIndexRequest, cpp2::LookupIndexResp>(env, counters, executor, cache) {}
 
-protected:
-    LookupProcessor(StorageEnv* env,
-                    const ProcessorCounters* counters,
-                    folly::Executor* executor,
-                    VertexCache* cache)
-        : LookupBaseProcessor<cpp2::LookupIndexRequest, cpp2::LookupIndexResp>(
-            env, counters, executor, cache) {}
-
-    void onProcessFinished() override;
+  void onProcessFinished() override;
 };
 
 }  // namespace storage

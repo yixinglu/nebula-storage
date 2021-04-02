@@ -15,37 +15,28 @@ namespace storage {
 
 extern ProcessorCounters kScanVertexCounters;
 
-class ScanVertexProcessor
-    : public QueryBaseProcessor<cpp2::ScanVertexRequest, cpp2::ScanVertexResponse> {
-public:
-    static ScanVertexProcessor* instance(
-            StorageEnv* env,
-            const ProcessorCounters* counters = &kScanVertexCounters,
-            folly::Executor* executor = nullptr) {
-        return new ScanVertexProcessor(env, counters, executor);
-    }
+class ScanVertexProcessor : public QueryBaseProcessor<cpp2::ScanVertexRequest, cpp2::ScanVertexResponse> {
+ public:
+  static ScanVertexProcessor* instance(StorageEnv* env, const ProcessorCounters* counters = &kScanVertexCounters,
+                                       folly::Executor* executor = nullptr) {
+    return new ScanVertexProcessor(env, counters, executor);
+  }
 
-    void process(const cpp2::ScanVertexRequest& req) override;
+  void process(const cpp2::ScanVertexRequest& req) override;
 
-    void doProcess(const cpp2::ScanVertexRequest& req);
+  void doProcess(const cpp2::ScanVertexRequest& req);
 
-private:
-    ScanVertexProcessor(StorageEnv* env,
-                        const ProcessorCounters* counters,
-                        folly::Executor* executor)
-        : QueryBaseProcessor<cpp2::ScanVertexRequest,
-                             cpp2::ScanVertexResponse>(env,
-                                                       counters,
-                                                       executor) {
-    }
+ private:
+  ScanVertexProcessor(StorageEnv* env, const ProcessorCounters* counters, folly::Executor* executor)
+      : QueryBaseProcessor<cpp2::ScanVertexRequest, cpp2::ScanVertexResponse>(env, counters, executor) {}
 
-    cpp2::ErrorCode checkAndBuildContexts(const cpp2::ScanVertexRequest& req) override;
+  cpp2::ErrorCode checkAndBuildContexts(const cpp2::ScanVertexRequest& req) override;
 
-    void buildTagColName(const std::vector<cpp2::VertexProp>& tagProps);
+  void buildTagColName(const std::vector<cpp2::VertexProp>& tagProps);
 
-    void onProcessFinished() override;
+  void onProcessFinished() override;
 
-    PartitionID partId_;
+  PartitionID partId_;
 };
 
 }  // namespace storage

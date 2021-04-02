@@ -4,8 +4,9 @@
  * attached with Common Clause Condition 1.0, found in the LICENSES directory.
  */
 
-#include "common/base/Base.h"
 #include <gtest/gtest.h>
+
+#include "common/base/Base.h"
 #include "utils/MemoryLockWrapper.h"
 
 namespace nebula {
@@ -14,67 +15,66 @@ namespace storage {
 using LockGuard = nebula::MemoryLockGuard<std::string>;
 
 class MemoryLockTest : public ::testing::Test {
-protected:
+ protected:
 };
 
 TEST_F(MemoryLockTest, SimpleTest) {
-    MemoryLockCore<std::string> mlock;
-    {
-        LockGuard lk1(&mlock, "1");
-        EXPECT_TRUE(lk1);
+  MemoryLockCore<std::string> mlock;
+  {
+    LockGuard lk1(&mlock, "1");
+    EXPECT_TRUE(lk1);
 
-        LockGuard lk2(&mlock, "1");
-        EXPECT_FALSE(lk2);
-        LOG(INFO) << "conflict key = " << lk2.conflictKey();
-    }
-    {
-        auto* lk1 = new LockGuard(&mlock, "1");
-        EXPECT_TRUE(*lk1);
+    LockGuard lk2(&mlock, "1");
+    EXPECT_FALSE(lk2);
+    LOG(INFO) << "conflict key = " << lk2.conflictKey();
+  }
+  {
+    auto* lk1 = new LockGuard(&mlock, "1");
+    EXPECT_TRUE(*lk1);
 
-        std::vector<std::string> keys{"1", "2", "3"};
-        LockGuard lk2(&mlock, keys);
-        EXPECT_FALSE(lk2);
-        LOG(INFO) << "conflict key = " << lk2.conflictKey();
+    std::vector<std::string> keys{"1", "2", "3"};
+    LockGuard lk2(&mlock, keys);
+    EXPECT_FALSE(lk2);
+    LOG(INFO) << "conflict key = " << lk2.conflictKey();
 
-        delete lk1;
-        LockGuard lk3(&mlock, keys);
-        EXPECT_TRUE(lk3);
-    }
-    {
-        // if keys has dup, but not call the dedup ctor, may lock failed
-        std::vector<std::string> keys{"1", "1", "1"};
-        LockGuard lk1(&mlock, keys);
-        EXPECT_FALSE(lk1);
-        LOG(INFO) << "conflict key = " << lk1.conflictKey();
+    delete lk1;
+    LockGuard lk3(&mlock, keys);
+    EXPECT_TRUE(lk3);
+  }
+  {
+    // if keys has dup, but not call the dedup ctor, may lock failed
+    std::vector<std::string> keys{"1", "1", "1"};
+    LockGuard lk1(&mlock, keys);
+    EXPECT_FALSE(lk1);
+    LOG(INFO) << "conflict key = " << lk1.conflictKey();
 
-        LockGuard lk2(&mlock, keys, true);
-        EXPECT_TRUE(lk2);
-    }
+    LockGuard lk2(&mlock, keys, true);
+    EXPECT_TRUE(lk2);
+  }
 }
 
 TEST_F(MemoryLockTest, MoveTest) {
-    MemoryLockCore<std::string> mlock;
-    {
-        LockGuard *lk1 = new LockGuard(&mlock, "1");
-        EXPECT_TRUE(*lk1);
+  MemoryLockCore<std::string> mlock;
+  {
+    LockGuard* lk1 = new LockGuard(&mlock, "1");
+    EXPECT_TRUE(*lk1);
 
-        auto lk2 = std::move(*lk1);
-        EXPECT_TRUE(lk2);
+    auto lk2 = std::move(*lk1);
+    EXPECT_TRUE(lk2);
 
-        delete lk1;
+    delete lk1;
 
-        LockGuard lk3(&mlock, "1");
-        EXPECT_FALSE(lk3);
-    }
+    LockGuard lk3(&mlock, "1");
+    EXPECT_FALSE(lk3);
+  }
 }
 
 }  // namespace storage
 }  // namespace nebula
 
-
 int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
-    folly::init(&argc, &argv, true);
-    google::SetStderrLogging(google::INFO);
-    return RUN_ALL_TESTS();
+  testing::InitGoogleTest(&argc, argv);
+  folly::init(&argc, &argv, true);
+  google::SetStderrLogging(google::INFO);
+  return RUN_ALL_TESTS();
 }

@@ -10,42 +10,41 @@ namespace nebula {
 namespace meta {
 
 void GetConfigProcessor::process(const cpp2::GetConfigReq& req) {
-    auto module = req.get_item().get_module();
-    auto name = req.get_item().get_name();
-    std::vector<cpp2::ConfigItem> items;
+  auto module = req.get_item().get_module();
+  auto name = req.get_item().get_name();
+  std::vector<cpp2::ConfigItem> items;
 
-    {
-        folly::SharedMutex::ReadHolder rHolder(LockUtils::configLock());
-        if (module != cpp2::ConfigModule::ALL) {
-            getOneConfig(module, name, items);
-        } else {
-            getOneConfig(cpp2::ConfigModule::GRAPH, name, items);
-            getOneConfig(cpp2::ConfigModule::STORAGE, name, items);
-        }
-    }
-
-    if (items.empty()) {
-        handleErrorCode(cpp2::ErrorCode::E_NOT_FOUND);
+  {
+    folly::SharedMutex::ReadHolder rHolder(LockUtils::configLock());
+    if (module != cpp2::ConfigModule::ALL) {
+      getOneConfig(module, name, items);
     } else {
-        handleErrorCode(cpp2::ErrorCode::SUCCEEDED);
-        resp_.set_items(std::move(items));
+      getOneConfig(cpp2::ConfigModule::GRAPH, name, items);
+      getOneConfig(cpp2::ConfigModule::STORAGE, name, items);
     }
-    onFinished();
+  }
+
+  if (items.empty()) {
+    handleErrorCode(cpp2::ErrorCode::E_NOT_FOUND);
+  } else {
+    handleErrorCode(cpp2::ErrorCode::SUCCEEDED);
+    resp_.set_items(std::move(items));
+  }
+  onFinished();
 }
 
-void GetConfigProcessor::getOneConfig(const cpp2::ConfigModule& module,
-                                      const std::string& name,
+void GetConfigProcessor::getOneConfig(const cpp2::ConfigModule& module, const std::string& name,
                                       std::vector<cpp2::ConfigItem>& items) {
-    std::string configKey = MetaServiceUtils::configKey(module, name);
-    auto ret = doGet(configKey);
-    if (!ret.ok()) {
-        return;
-    }
+  std::string configKey = MetaServiceUtils::configKey(module, name);
+  auto ret = doGet(configKey);
+  if (!ret.ok()) {
+    return;
+  }
 
-    cpp2::ConfigItem item = MetaServiceUtils::parseConfigValue(ret.value());
-    item.set_module(module);
-    item.set_name(name);
-    items.emplace_back(std::move(item));
+  cpp2::ConfigItem item = MetaServiceUtils::parseConfigValue(ret.value());
+  item.set_module(module);
+  item.set_name(name);
+  items.emplace_back(std::move(item));
 }
 
 }  // namespace meta

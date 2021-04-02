@@ -8,6 +8,7 @@
 #define META_CREATEBACKUPPROCESSOR_H_
 
 #include <gtest/gtest_prod.h>
+
 #include "meta/processors/BaseProcessor.h"
 #include "meta/processors/admin/AdminClient.h"
 
@@ -15,23 +16,22 @@ namespace nebula {
 namespace meta {
 
 class CreateBackupProcessor : public BaseProcessor<cpp2::CreateBackupResp> {
-public:
-    static CreateBackupProcessor* instance(kvstore::KVStore* kvstore, AdminClient* client) {
-        return new CreateBackupProcessor(kvstore, client);
-    }
-    void process(const cpp2::CreateBackupReq& req);
+ public:
+  static CreateBackupProcessor* instance(kvstore::KVStore* kvstore, AdminClient* client) {
+    return new CreateBackupProcessor(kvstore, client);
+  }
+  void process(const cpp2::CreateBackupReq& req);
 
-private:
-    explicit CreateBackupProcessor(kvstore::KVStore* kvstore, AdminClient* client)
-        : BaseProcessor<cpp2::CreateBackupResp>(kvstore), client_(client) {}
-    cpp2::ErrorCode cancelWriteBlocking();
-    folly::Optional<std::unordered_set<GraphSpaceID>> spaceNameToId(
-        const std::vector<std::string>* backupSpaces);
+ private:
+  explicit CreateBackupProcessor(kvstore::KVStore* kvstore, AdminClient* client)
+      : BaseProcessor<cpp2::CreateBackupResp>(kvstore), client_(client) {}
+  cpp2::ErrorCode cancelWriteBlocking();
+  folly::Optional<std::unordered_set<GraphSpaceID>> spaceNameToId(const std::vector<std::string>* backupSpaces);
 
-private:
-    AdminClient* client_;
+ private:
+  AdminClient* client_;
 };
-}   // namespace meta
-}   // namespace nebula
+}  // namespace meta
+}  // namespace nebula
 
-#endif   // META_CREATEBackupPROCESSOR_H_
+#endif  // META_CREATEBackupPROCESSOR_H_

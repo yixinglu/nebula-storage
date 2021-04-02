@@ -14,21 +14,15 @@ namespace nebula {
 namespace storage {
 
 class RebuildTagIndexTask : public RebuildIndexTask {
-public:
-    explicit RebuildTagIndexTask(StorageEnv* env,
-                                 TaskContext&& ctx)
-        : RebuildIndexTask(env, std::move(ctx)) {}
+ public:
+  explicit RebuildTagIndexTask(StorageEnv* env, TaskContext&& ctx) : RebuildIndexTask(env, std::move(ctx)) {}
 
-private:
-    StatusOr<IndexItems>
-    getIndexes(GraphSpaceID space) override;
+ private:
+  StatusOr<IndexItems> getIndexes(GraphSpaceID space) override;
 
-    StatusOr<std::shared_ptr<meta::cpp2::IndexItem>>
-    getIndex(GraphSpaceID space, IndexID index) override;
+  StatusOr<std::shared_ptr<meta::cpp2::IndexItem>> getIndex(GraphSpaceID space, IndexID index) override;
 
-    kvstore::ResultCode buildIndexGlobal(GraphSpaceID space,
-                                         PartitionID part,
-                                         const IndexItems& items) override;
+  kvstore::ResultCode buildIndexGlobal(GraphSpaceID space, PartitionID part, const IndexItems& items) override;
 };
 
 }  // namespace storage

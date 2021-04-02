@@ -13,18 +13,15 @@ namespace nebula {
 namespace meta {
 
 class DropTagProcessor : public BaseProcessor<cpp2::ExecResp> {
-public:
-    static DropTagProcessor* instance(kvstore::KVStore* kvstore) {
-        return new DropTagProcessor(kvstore);
-    }
+ public:
+  static DropTagProcessor* instance(kvstore::KVStore* kvstore) { return new DropTagProcessor(kvstore); }
 
-    void process(const cpp2::DropTagReq& req);
+  void process(const cpp2::DropTagReq& req);
 
-private:
-    explicit DropTagProcessor(kvstore::KVStore* kvstore)
-        : BaseProcessor<cpp2::ExecResp>(kvstore) {}
+ private:
+  explicit DropTagProcessor(kvstore::KVStore* kvstore) : BaseProcessor<cpp2::ExecResp>(kvstore) {}
 
-    StatusOr<std::vector<std::string>> getTagKeys(GraphSpaceID id, TagID tagId);
+  StatusOr<std::vector<std::string>> getTagKeys(GraphSpaceID id, TagID tagId);
 };
 
 }  // namespace meta

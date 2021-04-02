@@ -4,12 +4,13 @@
  * attached with Common Clause Condition 1.0, found in the LICENSES directory.
  */
 
+#include "meta/processors/jobMan/RebuildJobExecutor.h"
+
 #include "common/network/NetworkUtils.h"
 #include "meta/ActiveHostsMan.h"
 #include "meta/MetaServiceUtils.h"
 #include "meta/common/MetaCommon.h"
 #include "meta/processors/Common.h"
-#include "meta/processors/jobMan/RebuildJobExecutor.h"
 #include "utils/Utils.h"
 
 DECLARE_int32(heartbeat_interval_secs);
@@ -17,63 +18,60 @@ DECLARE_int32(heartbeat_interval_secs);
 namespace nebula {
 namespace meta {
 
-bool RebuildJobExecutor::check() {
-    return paras_.size() >= 1;
-}
+bool RebuildJobExecutor::check() { return paras_.size() >= 1; }
 
 cpp2::ErrorCode RebuildJobExecutor::prepare() {
-    // the last value of paras_ is the space name, others are index name
-    auto spaceRet = getSpaceIdFromName(paras_.back());
-    if (!nebula::ok(spaceRet)) {
-        LOG(ERROR) << "Can't find the space: " << paras_.back();
-        return nebula::error(spaceRet);
-    }
-    space_ = nebula::value(spaceRet);
+  // the last value of paras_ is the space name, others are index name
+  auto spaceRet = getSpaceIdFromName(paras_.back());
+  if (!nebula::ok(spaceRet)) {
+    LOG(ERROR) << "Can't find the space: " << paras_.back();
+    return nebula::error(spaceRet);
+  }
+  space_ = nebula::value(spaceRet);
 
-    std::string indexValue;
-    IndexID indexId = -1;
-    for (auto i = 0u; i < paras_.size() - 1; i++) {
-        auto indexKey = MetaServiceUtils::indexIndexKey(space_, paras_[i]);
-        auto result = kvstore_->get(kDefaultSpaceId, kDefaultPartId, indexKey, &indexValue);
-        if (result != kvstore::ResultCode::SUCCEEDED) {
-            LOG(ERROR) << "Get indexKey error indexName: " << paras_[i];
-            return cpp2::ErrorCode::E_NOT_FOUND;
-        }
-
-        indexId = *reinterpret_cast<const IndexID*>(indexValue.c_str());
-        LOG(INFO) << "Rebuild Index Space " << space_ << ", Index " << indexId;
-        taskParameters_.emplace_back(folly::to<std::string>(indexId));
+  std::string indexValue;
+  IndexID indexId = -1;
+  for (auto i = 0u; i < paras_.size() - 1; i++) {
+    auto indexKey = MetaServiceUtils::indexIndexKey(space_, paras_[i]);
+    auto result = kvstore_->get(kDefaultSpaceId, kDefaultPartId, indexKey, &indexValue);
+    if (result != kvstore::ResultCode::SUCCEEDED) {
+      LOG(ERROR) << "Get indexKey error indexName: " << paras_[i];
+      return cpp2::ErrorCode::E_NOT_FOUND;
     }
-    return cpp2::ErrorCode::SUCCEEDED;
+
+    indexId = *reinterpret_cast<const IndexID*>(indexValue.c_str());
+    LOG(INFO) << "Rebuild Index Space " << space_ << ", Index " << indexId;
+    taskParameters_.emplace_back(folly::to<std::string>(indexId));
+  }
+  return cpp2::ErrorCode::SUCCEEDED;
 }
 
 meta::cpp2::ErrorCode RebuildJobExecutor::stop() {
-    auto errOrTargetHost = getTargetHost(space_);
-    if (!nebula::ok(errOrTargetHost)) {
-        LOG(ERROR) << "Get target host failed";
-        return cpp2::ErrorCode::E_NO_HOSTS;
-    }
+  auto errOrTargetHost = getTargetHost(space_);
+  if (!nebula::ok(errOrTargetHost)) {
+    LOG(ERROR) << "Get target host failed";
+    return cpp2::ErrorCode::E_NO_HOSTS;
+  }
 
-    auto& hosts = nebula::value(errOrTargetHost);
-    std::vector<folly::Future<Status>> futures;
-    for (auto& host : hosts) {
-        auto future = adminClient_->stopTask({Utils::getAdminAddrFromStoreAddr(host.first)},
-                                             jobId_, 0);
-        futures.emplace_back(std::move(future));
-    }
+  auto& hosts = nebula::value(errOrTargetHost);
+  std::vector<folly::Future<Status>> futures;
+  for (auto& host : hosts) {
+    auto future = adminClient_->stopTask({Utils::getAdminAddrFromStoreAddr(host.first)}, jobId_, 0);
+    futures.emplace_back(std::move(future));
+  }
 
-    auto tries = folly::collectAll(std::move(futures)).get();
-    if (std::any_of(tries.begin(), tries.end(), [](auto& t){ return t.hasException(); })) {
-        LOG(ERROR) << "RebuildJobExecutor::stop() RPC failure.";
-        return cpp2::ErrorCode::E_STOP_JOB_FAILURE;
+  auto tries = folly::collectAll(std::move(futures)).get();
+  if (std::any_of(tries.begin(), tries.end(), [](auto& t) { return t.hasException(); })) {
+    LOG(ERROR) << "RebuildJobExecutor::stop() RPC failure.";
+    return cpp2::ErrorCode::E_STOP_JOB_FAILURE;
+  }
+  for (const auto& t : tries) {
+    if (!t.value().ok()) {
+      LOG(ERROR) << "Stop Build Index Failed";
+      return cpp2::ErrorCode::E_STOP_JOB_FAILURE;
     }
-    for (const auto& t : tries) {
-        if (!t.value().ok()) {
-            LOG(ERROR) << "Stop Build Index Failed";
-            return cpp2::ErrorCode::E_STOP_JOB_FAILURE;
-        }
-    }
-    return cpp2::ErrorCode::SUCCEEDED;
+  }
+  return cpp2::ErrorCode::SUCCEEDED;
 }
 
 }  // namespace meta

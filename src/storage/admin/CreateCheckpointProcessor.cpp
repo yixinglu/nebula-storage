@@ -10,22 +10,20 @@ namespace nebula {
 namespace storage {
 
 void CreateCheckpointProcessor::process(const cpp2::CreateCPRequest& req) {
-    CHECK_NOTNULL(env_);
-    auto spaceId = req.get_space_id();
-    auto& name = req.get_name();
-    auto ret = env_->kvstore_->createCheckpoint(spaceId, std::move(name));
-    if (!ok(ret)) {
-        cpp2::PartitionResult thriftRet;
-        thriftRet.set_code(to(error(ret)));
-        codes_.emplace_back(std::move(thriftRet));
-        onFinished();
-        return;
-    }
-    resp_.set_path(nebula::value(ret));
+  CHECK_NOTNULL(env_);
+  auto spaceId = req.get_space_id();
+  auto& name = req.get_name();
+  auto ret = env_->kvstore_->createCheckpoint(spaceId, std::move(name));
+  if (!ok(ret)) {
+    cpp2::PartitionResult thriftRet;
+    thriftRet.set_code(to(error(ret)));
+    codes_.emplace_back(std::move(thriftRet));
     onFinished();
+    return;
+  }
+  resp_.set_path(nebula::value(ret));
+  onFinished();
 }
 
 }  // namespace storage
 }  // namespace nebula
-
-

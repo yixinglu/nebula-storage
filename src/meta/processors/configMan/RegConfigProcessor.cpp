@@ -10,35 +10,33 @@ namespace nebula {
 namespace meta {
 
 void RegConfigProcessor::process(const cpp2::RegConfigReq& req) {
-    std::vector<kvstore::KV> data;
-    {
-        folly::SharedMutex::WriteHolder wHolder(LockUtils::configLock());
-        for (const auto& item : req.get_items()) {
-            auto module = item.get_module();
-            auto name = item.get_name();
-            auto mode = item.get_mode();
-            auto value = item.get_value();
-            VLOG(1) << "Config name: " << name
-                    << ", mode: " << apache::thrift::util::enumNameSafe(mode)
-                    << ", module: " << apache::thrift::util::enumNameSafe(module)
-                    << ", value: " << value;
+  std::vector<kvstore::KV> data;
+  {
+    folly::SharedMutex::WriteHolder wHolder(LockUtils::configLock());
+    for (const auto& item : req.get_items()) {
+      auto module = item.get_module();
+      auto name = item.get_name();
+      auto mode = item.get_mode();
+      auto value = item.get_value();
+      VLOG(1) << "Config name: " << name << ", mode: " << apache::thrift::util::enumNameSafe(mode)
+              << ", module: " << apache::thrift::util::enumNameSafe(module) << ", value: " << value;
 
-            std::string configKey = MetaServiceUtils::configKey(module, name);
-            // ignore config which has been registered before
-            if (doGet(configKey).ok()) {
-                continue;
-            }
-            std::string configValue = MetaServiceUtils::configValue(mode, value);
-            data.emplace_back(std::move(configKey), std::move(configValue));
-        }
-
-        if (!data.empty()) {
-            doSyncPutAndUpdate(std::move(data));
-            return;
-        }
+      std::string configKey = MetaServiceUtils::configKey(module, name);
+      // ignore config which has been registered before
+      if (doGet(configKey).ok()) {
+        continue;
+      }
+      std::string configValue = MetaServiceUtils::configValue(mode, value);
+      data.emplace_back(std::move(configKey), std::move(configValue));
     }
-    handleErrorCode(cpp2::ErrorCode::SUCCEEDED);
-    onFinished();
+
+    if (!data.empty()) {
+      doSyncPutAndUpdate(std::move(data));
+      return;
+    }
+  }
+  handleErrorCode(cpp2::ErrorCode::SUCCEEDED);
+  onFinished();
 }
 
 }  // namespace meta

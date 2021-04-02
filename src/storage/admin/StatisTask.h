@@ -7,8 +7,8 @@
 #ifndef STORAGE_ADMIN_STATISTASK_H_
 #define STORAGE_ADMIN_STATISTASK_H_
 
-#include "common/thrift/ThriftTypes.h"
 #include "common/interface/gen-cpp2/meta_types.h"
+#include "common/thrift/ThriftTypes.h"
 #include "kvstore/KVEngine.h"
 #include "kvstore/NebulaStore.h"
 #include "storage/admin/AdminTask.h"
@@ -17,46 +17,39 @@ namespace nebula {
 namespace storage {
 
 class StatisTask : public AdminTask {
-public:
-    using AdminTask::finish;
-    StatisTask(StorageEnv* env, TaskContext&& ctx)
-        : AdminTask(env, std::move(ctx)) {}
+ public:
+  using AdminTask::finish;
+  StatisTask(StorageEnv* env, TaskContext&& ctx) : AdminTask(env, std::move(ctx)) {}
 
-    ~StatisTask() {
-        LOG(INFO) << "Release Statis Task";
-    }
+  ~StatisTask() { LOG(INFO) << "Release Statis Task"; }
 
-    ErrorOr<cpp2::ErrorCode, std::vector<AdminSubTask>> genSubTasks() override;
+  ErrorOr<cpp2::ErrorCode, std::vector<AdminSubTask>> genSubTasks() override;
 
-    void finish(cpp2::ErrorCode rc) override;
+  void finish(cpp2::ErrorCode rc) override;
 
-protected:
-    void cancel() override {
-        canceled_ = true;
-    }
+ protected:
+  void cancel() override { canceled_ = true; }
 
-    kvstore::ResultCode genSubTask(GraphSpaceID space,
-                                   PartitionID part,
-                                   std::unordered_map<TagID, std::string> tags,
-                                   std::unordered_map<EdgeType, std::string> edges);
+  kvstore::ResultCode genSubTask(GraphSpaceID space, PartitionID part, std::unordered_map<TagID, std::string> tags,
+                                 std::unordered_map<EdgeType, std::string> edges);
 
-private:
-    cpp2::ErrorCode getSchemas(GraphSpaceID spaceId);
+ private:
+  cpp2::ErrorCode getSchemas(GraphSpaceID spaceId);
 
-protected:
-    std::atomic<bool>                           canceled_{false};
-    GraphSpaceID                                spaceId_;
+ protected:
+  std::atomic<bool> canceled_{false};
+  GraphSpaceID spaceId_;
 
-    // All tagIds and tagName of the spaceId
-    std::unordered_map<TagID, std::string>      tags_;
+  // All tagIds and tagName of the spaceId
+  std::unordered_map<TagID, std::string> tags_;
 
-    // All edgeTypes and edgeName of the spaceId
-    std::unordered_map<EdgeType, std::string>   edges_;
+  // All edgeTypes and edgeName of the spaceId
+  std::unordered_map<EdgeType, std::string> edges_;
 
-    folly::ConcurrentHashMap<PartitionID, nebula::meta::cpp2::StatisItem> statistics_;
+  folly::ConcurrentHashMap<PartitionID, nebula::meta::cpp2::StatisItem> statistics_;
 
-    // The number of subtasks equals to the number of parts in request
-    size_t                                      subTaskSize_{0};
+  // The number of subtasks equals to the number of parts in request
+  size_t subTaskSize_{0};
 };
 
 }  // namespace storage

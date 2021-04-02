@@ -9,9 +9,9 @@
 
 #include "common/base/Base.h"
 #include "common/base/ConcurrentLRUCache.h"
+#include "kvstore/LogEncoder.h"
 #include "storage/BaseProcessor.h"
 #include "storage/CommonUtils.h"
-#include "kvstore/LogEncoder.h"
 
 namespace nebula {
 namespace storage {
@@ -19,38 +19,31 @@ namespace storage {
 extern ProcessorCounters kAddVerticesCounters;
 
 class AddVerticesProcessor : public BaseProcessor<cpp2::ExecResponse> {
-public:
-    static AddVerticesProcessor* instance(
-            StorageEnv* env,
-            const ProcessorCounters* counters = &kAddVerticesCounters,
-            VertexCache* cache = nullptr) {
-        return new AddVerticesProcessor(env, counters, cache);
-    }
+ public:
+  static AddVerticesProcessor* instance(StorageEnv* env, const ProcessorCounters* counters = &kAddVerticesCounters,
+                                        VertexCache* cache = nullptr) {
+    return new AddVerticesProcessor(env, counters, cache);
+  }
 
-    void process(const cpp2::AddVerticesRequest& req);
+  void process(const cpp2::AddVerticesRequest& req);
 
-    void doProcess(const cpp2::AddVerticesRequest& req);
+  void doProcess(const cpp2::AddVerticesRequest& req);
 
-    void doProcessWithIndex(const cpp2::AddVerticesRequest& req);
+  void doProcessWithIndex(const cpp2::AddVerticesRequest& req);
 
-private:
-    AddVerticesProcessor(StorageEnv* env,
-                         const ProcessorCounters* counters,
-                         VertexCache* cache)
-        : BaseProcessor<cpp2::ExecResponse>(env, counters)
-        , vertexCache_(cache) {}
+ private:
+  AddVerticesProcessor(StorageEnv* env, const ProcessorCounters* counters, VertexCache* cache)
+      : BaseProcessor<cpp2::ExecResponse>(env, counters), vertexCache_(cache) {}
 
-    ErrorOr<kvstore::ResultCode, std::string> findOldValue(PartitionID partId,
-                                                           const VertexID& vId,
-                                                           TagID tagId);
+  ErrorOr<kvstore::ResultCode, std::string> findOldValue(PartitionID partId, const VertexID& vId, TagID tagId);
 
-    std::string indexKey(PartitionID partId, const VertexID& vId, RowReader* reader,
-                         std::shared_ptr<nebula::meta::cpp2::IndexItem> index);
+  std::string indexKey(PartitionID partId, const VertexID& vId, RowReader* reader,
+                       std::shared_ptr<nebula::meta::cpp2::IndexItem> index);
 
-private:
-    GraphSpaceID                                                spaceId_;
-    VertexCache*                                                vertexCache_{nullptr};
-    std::vector<std::shared_ptr<nebula::meta::cpp2::IndexItem>> indexes_;
+ private:
+  GraphSpaceID spaceId_;
+  VertexCache* vertexCache_{nullptr};
+  std::vector<std::shared_ptr<nebula::meta::cpp2::IndexItem>> indexes_;
 };
 
 }  // namespace storage

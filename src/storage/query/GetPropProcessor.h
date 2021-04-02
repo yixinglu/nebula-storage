@@ -7,62 +7,53 @@
 #ifndef STORAGE_QUERY_GETPROPPROCESSOR_H_
 #define STORAGE_QUERY_GETPROPPROCESSOR_H_
 
-#include "common/base/Base.h"
 #include <gtest/gtest_prod.h>
-#include "storage/query/QueryBaseProcessor.h"
+
+#include "common/base/Base.h"
 #include "storage/exec/StoragePlan.h"
+#include "storage/query/QueryBaseProcessor.h"
 
 namespace nebula {
 namespace storage {
 
 extern ProcessorCounters kGetPropCounters;
 
-class GetPropProcessor
-    : public QueryBaseProcessor<cpp2::GetPropRequest, cpp2::GetPropResponse> {
-public:
-    static GetPropProcessor* instance(
-            StorageEnv* env,
-            const ProcessorCounters* counters = &kGetPropCounters,
-            folly::Executor* executor = nullptr,
-            VertexCache* cache = nullptr) {
-        return new GetPropProcessor(env, counters, executor, cache);
-    }
+class GetPropProcessor : public QueryBaseProcessor<cpp2::GetPropRequest, cpp2::GetPropResponse> {
+ public:
+  static GetPropProcessor* instance(StorageEnv* env, const ProcessorCounters* counters = &kGetPropCounters,
+                                    folly::Executor* executor = nullptr, VertexCache* cache = nullptr) {
+    return new GetPropProcessor(env, counters, executor, cache);
+  }
 
-    void process(const cpp2::GetPropRequest& req) override;
+  void process(const cpp2::GetPropRequest& req) override;
 
-    void doProcess(const cpp2::GetPropRequest& req);
+  void doProcess(const cpp2::GetPropRequest& req);
 
-protected:
-    GetPropProcessor(StorageEnv* env,
-                     const ProcessorCounters* counters,
-                     folly::Executor* executor,
-                     VertexCache* cache)
-        : QueryBaseProcessor<cpp2::GetPropRequest, cpp2::GetPropResponse>(env,
-                                                                          counters,
-                                                                          executor,
-                                                                          cache) {}
+ protected:
+  GetPropProcessor(StorageEnv* env, const ProcessorCounters* counters, folly::Executor* executor, VertexCache* cache)
+      : QueryBaseProcessor<cpp2::GetPropRequest, cpp2::GetPropResponse>(env, counters, executor, cache) {}
 
-    StoragePlan<VertexID> buildTagPlan(nebula::DataSet* result);
+  StoragePlan<VertexID> buildTagPlan(nebula::DataSet* result);
 
-    StoragePlan<cpp2::EdgeKey> buildEdgePlan(nebula::DataSet* result);
+  StoragePlan<cpp2::EdgeKey> buildEdgePlan(nebula::DataSet* result);
 
-    void onProcessFinished() override;
+  void onProcessFinished() override;
 
-    cpp2::ErrorCode checkAndBuildContexts(const cpp2::GetPropRequest& req) override;
+  cpp2::ErrorCode checkAndBuildContexts(const cpp2::GetPropRequest& req) override;
 
-    cpp2::ErrorCode checkRequest(const cpp2::GetPropRequest& req);
+  cpp2::ErrorCode checkRequest(const cpp2::GetPropRequest& req);
 
-    cpp2::ErrorCode buildTagContext(const cpp2::GetPropRequest& req);
+  cpp2::ErrorCode buildTagContext(const cpp2::GetPropRequest& req);
 
-    cpp2::ErrorCode buildEdgeContext(const cpp2::GetPropRequest& req);
+  cpp2::ErrorCode buildEdgeContext(const cpp2::GetPropRequest& req);
 
-    void buildTagColName(const std::vector<cpp2::VertexProp>& tagProps);
-    void buildEdgeColName(const std::vector<cpp2::EdgeProp>& edgeProps);
+  void buildTagColName(const std::vector<cpp2::VertexProp>& tagProps);
+  void buildEdgeColName(const std::vector<cpp2::EdgeProp>& edgeProps);
 
-private:
-    bool isEdge_ = false;                   // true for edge, false for tag
-    std::unique_ptr<StorageExpressionContext> expCtx_;
-    std::vector<std::unique_ptr<Expression>> yields_;
+ private:
+  bool isEdge_ = false;  // true for edge, false for tag
+  std::unique_ptr<StorageExpressionContext> expCtx_;
+  std::vector<std::unique_ptr<Expression>> yields_;
 };
 
 }  // namespace storage

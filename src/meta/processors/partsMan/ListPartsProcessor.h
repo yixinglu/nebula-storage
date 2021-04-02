@@ -14,29 +14,25 @@ namespace nebula {
 namespace meta {
 
 class ListPartsProcessor : public BaseProcessor<cpp2::ListPartsResp> {
-public:
-    static ListPartsProcessor* instance(kvstore::KVStore* kvstore) {
-        return new ListPartsProcessor(kvstore);
-    }
+ public:
+  static ListPartsProcessor* instance(kvstore::KVStore* kvstore) { return new ListPartsProcessor(kvstore); }
 
-    void process(const cpp2::ListPartsReq& req);
+  void process(const cpp2::ListPartsReq& req);
 
-private:
-    explicit ListPartsProcessor(kvstore::KVStore* kvstore)
-            : BaseProcessor<cpp2::ListPartsResp>(kvstore) {}
+ private:
+  explicit ListPartsProcessor(kvstore::KVStore* kvstore) : BaseProcessor<cpp2::ListPartsResp>(kvstore) {}
 
+  // Get parts alloc information
+  StatusOr<std::unordered_map<PartitionID, std::vector<HostAddr>>> getAllParts();
 
-    // Get parts alloc information
-    StatusOr<std::unordered_map<PartitionID, std::vector<HostAddr>>> getAllParts();
+  // Get all parts with storage leader distribution
+  void getLeaderDist(std::vector<cpp2::PartItem>& partItems);
 
-    // Get all parts with storage leader distribution
-    void getLeaderDist(std::vector<cpp2::PartItem>& partItems);
-
-private:
-    GraphSpaceID                                        spaceId_;
-    std::vector<PartitionID>                            partIds_;
-    bool                                                showAllParts_{true};
-    std::unordered_map<PartitionID, size_t>             partIdIndex_;
+ private:
+  GraphSpaceID spaceId_;
+  std::vector<PartitionID> partIds_;
+  bool showAllParts_{true};
+  std::unordered_map<PartitionID, size_t> partIdIndex_;
 };
 
 }  // namespace meta

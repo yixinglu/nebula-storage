@@ -15,44 +15,41 @@ namespace nebula {
 namespace meta {
 
 class StatisJobExecutor : public MetaJobExecutor {
-public:
-    StatisJobExecutor(JobID jobId,
-                      kvstore::KVStore* kvstore,
-                      AdminClient* adminClient,
-                      const std::vector<std::string>& paras)
-        : MetaJobExecutor(jobId, kvstore, adminClient, paras) {
-        toLeader_ = true;
-    }
+ public:
+  StatisJobExecutor(JobID jobId, kvstore::KVStore* kvstore, AdminClient* adminClient,
+                    const std::vector<std::string>& paras)
+      : MetaJobExecutor(jobId, kvstore, adminClient, paras) {
+    toLeader_ = true;
+  }
 
-    bool check() override;
+  bool check() override;
 
-    cpp2::ErrorCode prepare() override;
+  cpp2::ErrorCode prepare() override;
 
-    cpp2::ErrorCode stop() override;
+  cpp2::ErrorCode stop() override;
 
-    folly::Future<Status>
-    executeInternal(HostAddr&& address, std::vector<PartitionID>&& parts) override;
+  folly::Future<Status> executeInternal(HostAddr&& address, std::vector<PartitionID>&& parts) override;
 
-    // Summarize the results of statisItem_
-    void finish(bool exeSuccessed) override;
+  // Summarize the results of statisItem_
+  void finish(bool exeSuccessed) override;
 
-    cpp2::ErrorCode saveSpecialTaskStatus(const cpp2::ReportTaskReq& req) override;
+  cpp2::ErrorCode saveSpecialTaskStatus(const cpp2::ReportTaskReq& req) override;
 
-private:
-    // Statis job writes an additional data.
-    // The additional data is written when the statis job passes the check function.
-    // Update this additional data when job finishes.
-    kvstore::ResultCode save(const std::string& key, const std::string& val);
+ private:
+  // Statis job writes an additional data.
+  // The additional data is written when the statis job passes the check
+  // function. Update this additional data when job finishes.
+  kvstore::ResultCode save(const std::string& key, const std::string& val);
 
-    void addStatis(cpp2::StatisItem& lhs, const cpp2::StatisItem& rhs);
+  void addStatis(cpp2::StatisItem& lhs, const cpp2::StatisItem& rhs);
 
-    std::string toTempKey(int32_t jobId);
+  std::string toTempKey(int32_t jobId);
 
-    void doRemove(const std::string& key);
+  void doRemove(const std::string& key);
 
-private:
-    // Statis results
-    std::unordered_map<HostAddr, cpp2::StatisItem>  statisItem_;
+ private:
+  // Statis results
+  std::unordered_map<HostAddr, cpp2::StatisItem> statisItem_;
 };
 
 }  // namespace meta

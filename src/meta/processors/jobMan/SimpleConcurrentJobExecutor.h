@@ -14,17 +14,15 @@ namespace nebula {
 namespace meta {
 
 class SimpleConcurrentJobExecutor : public MetaJobExecutor {
-public:
-    SimpleConcurrentJobExecutor(JobID jobId,
-                                kvstore::KVStore* kvstore,
-                                AdminClient* adminClient,
-                                const std::vector<std::string>& params);
+ public:
+  SimpleConcurrentJobExecutor(JobID jobId, kvstore::KVStore* kvstore, AdminClient* adminClient,
+                              const std::vector<std::string>& params);
 
-    bool check() override;
+  bool check() override;
 
-    cpp2::ErrorCode prepare() override;
+  cpp2::ErrorCode prepare() override;
 
-    cpp2::ErrorCode stop() override;
+  cpp2::ErrorCode stop() override;
 };
 
 }  // namespace meta

@@ -7,65 +7,53 @@
 #ifndef STORAGE_QUERY_GETNEIGHBORSPROCESSOR_H_
 #define STORAGE_QUERY_GETNEIGHBORSPROCESSOR_H_
 
-#include "common/base/Base.h"
 #include <gtest/gtest_prod.h>
-#include "storage/query/QueryBaseProcessor.h"
+
+#include "common/base/Base.h"
 #include "storage/exec/StoragePlan.h"
+#include "storage/query/QueryBaseProcessor.h"
 
 namespace nebula {
 namespace storage {
 
 extern ProcessorCounters kGetNeighborsCounters;
 
-class GetNeighborsProcessor
-    : public QueryBaseProcessor<cpp2::GetNeighborsRequest, cpp2::GetNeighborsResponse> {
-    FRIEND_TEST(ScanEdgePropBench, EdgeTypePrefixScanVsVertexPrefixScan);
+class GetNeighborsProcessor : public QueryBaseProcessor<cpp2::GetNeighborsRequest, cpp2::GetNeighborsResponse> {
+  FRIEND_TEST(ScanEdgePropBench, EdgeTypePrefixScanVsVertexPrefixScan);
 
-public:
-    static GetNeighborsProcessor* instance(
-            StorageEnv* env,
-            const ProcessorCounters* counters = &kGetNeighborsCounters,
-            folly::Executor* executor = nullptr,
-            VertexCache* cache = nullptr) {
-        return new GetNeighborsProcessor(env, counters, executor, cache);
-    }
+ public:
+  static GetNeighborsProcessor* instance(StorageEnv* env, const ProcessorCounters* counters = &kGetNeighborsCounters,
+                                         folly::Executor* executor = nullptr, VertexCache* cache = nullptr) {
+    return new GetNeighborsProcessor(env, counters, executor, cache);
+  }
 
-    void process(const cpp2::GetNeighborsRequest& req) override;
+  void process(const cpp2::GetNeighborsRequest& req) override;
 
-    void doProcess(const cpp2::GetNeighborsRequest& req);
+  void doProcess(const cpp2::GetNeighborsRequest& req);
 
-protected:
-    GetNeighborsProcessor(StorageEnv* env,
-                          const ProcessorCounters* counters,
-                          folly::Executor* executor,
-                          VertexCache* cache)
-        : QueryBaseProcessor<cpp2::GetNeighborsRequest,
-                             cpp2::GetNeighborsResponse>(env,
-                                                         counters,
-                                                         executor,
-                                                         cache) {}
+ protected:
+  GetNeighborsProcessor(StorageEnv* env, const ProcessorCounters* counters, folly::Executor* executor,
+                        VertexCache* cache)
+      : QueryBaseProcessor<cpp2::GetNeighborsRequest, cpp2::GetNeighborsResponse>(env, counters, executor, cache) {}
 
-    StoragePlan<VertexID> buildPlan(nebula::DataSet* result,
-                                    int64_t limit = 0,
-                                    bool random = false);
+  StoragePlan<VertexID> buildPlan(nebula::DataSet* result, int64_t limit = 0, bool random = false);
 
-    void onProcessFinished() override;
+  void onProcessFinished() override;
 
-    cpp2::ErrorCode checkAndBuildContexts(const cpp2::GetNeighborsRequest& req) override;
-    cpp2::ErrorCode buildTagContext(const cpp2::TraverseSpec& req);
-    cpp2::ErrorCode buildEdgeContext(const cpp2::TraverseSpec& req);
+  cpp2::ErrorCode checkAndBuildContexts(const cpp2::GetNeighborsRequest& req) override;
+  cpp2::ErrorCode buildTagContext(const cpp2::TraverseSpec& req);
+  cpp2::ErrorCode buildEdgeContext(const cpp2::TraverseSpec& req);
 
-    // build tag/edge col name in response when prop specified
-    void buildTagColName(const std::vector<cpp2::VertexProp>& tagProps);
-    void buildEdgeColName(const std::vector<cpp2::EdgeProp>& edgeProps);
+  // build tag/edge col name in response when prop specified
+  void buildTagColName(const std::vector<cpp2::VertexProp>& tagProps);
+  void buildEdgeColName(const std::vector<cpp2::EdgeProp>& edgeProps);
 
-    // add PropContext of stat
-    cpp2::ErrorCode handleEdgeStatProps(const std::vector<cpp2::StatProp>& statProps);
-    cpp2::ErrorCode checkStatType(const meta::SchemaProviderIf::Field* field,
-                                  cpp2::StatType statType);
+  // add PropContext of stat
+  cpp2::ErrorCode handleEdgeStatProps(const std::vector<cpp2::StatProp>& statProps);
+  cpp2::ErrorCode checkStatType(const meta::SchemaProviderIf::Field* field, cpp2::StatType statType);
 
-private:
-    std::unique_ptr<StorageExpressionContext> expCtx_;
+ private:
+  std::unique_ptr<StorageExpressionContext> expCtx_;
 };
 
 }  // namespace storage

@@ -13,21 +13,17 @@ namespace nebula {
 namespace meta {
 
 class AddZoneProcessor : public BaseProcessor<cpp2::ExecResp> {
-public:
-    static AddZoneProcessor* instance(kvstore::KVStore* kvstore) {
-        return new AddZoneProcessor(kvstore);
-    }
+ public:
+  static AddZoneProcessor* instance(kvstore::KVStore* kvstore) { return new AddZoneProcessor(kvstore); }
 
-    void process(const cpp2::AddZoneReq& req);
+  void process(const cpp2::AddZoneReq& req);
 
-private:
-    explicit AddZoneProcessor(kvstore::KVStore* kvstore)
-        : BaseProcessor<cpp2::ExecResp>(kvstore) {}
+ private:
+  explicit AddZoneProcessor(kvstore::KVStore* kvstore) : BaseProcessor<cpp2::ExecResp>(kvstore) {}
 
-    bool checkHostNotOverlap(const std::vector<HostAddr>& nodes);
+  bool checkHostNotOverlap(const std::vector<HostAddr>& nodes);
 };
 
 }  // namespace meta
 }  // namespace nebula
 #endif  // META_ADDZONEPROCESSOR_H
-

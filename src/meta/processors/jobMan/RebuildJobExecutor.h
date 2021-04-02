@@ -15,23 +15,21 @@ namespace nebula {
 namespace meta {
 
 class RebuildJobExecutor : public MetaJobExecutor {
-public:
-    RebuildJobExecutor(JobID jobId,
-                       kvstore::KVStore* kvstore,
-                       AdminClient* adminClient,
-                       const std::vector<std::string>& paras)
-        : MetaJobExecutor(jobId, kvstore, adminClient, paras) {
-        toLeader_ = true;
-    }
+ public:
+  RebuildJobExecutor(JobID jobId, kvstore::KVStore* kvstore, AdminClient* adminClient,
+                     const std::vector<std::string>& paras)
+      : MetaJobExecutor(jobId, kvstore, adminClient, paras) {
+    toLeader_ = true;
+  }
 
-    bool check() override;
+  bool check() override;
 
-    cpp2::ErrorCode prepare() override;
+  cpp2::ErrorCode prepare() override;
 
-    meta::cpp2::ErrorCode stop() override;
+  meta::cpp2::ErrorCode stop() override;
 
-protected:
-    std::vector<std::string>  taskParameters_;
+ protected:
+  std::vector<std::string> taskParameters_;
 };
 
 }  // namespace meta

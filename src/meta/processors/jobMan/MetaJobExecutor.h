@@ -15,76 +15,64 @@
 namespace nebula {
 namespace meta {
 
-using ErrOrHosts  = ErrorOr<cpp2::ErrorCode,
-                            std::vector<std::pair<HostAddr, std::vector<PartitionID>>>>;
+using ErrOrHosts = ErrorOr<cpp2::ErrorCode, std::vector<std::pair<HostAddr, std::vector<PartitionID>>>>;
 
 class MetaJobExecutor {
-public:
-    MetaJobExecutor(JobID jobId,
-                    kvstore::KVStore* kvstore,
-                    AdminClient* adminClient,
-                    const std::vector<std::string>& paras)
-    : jobId_(jobId),
-      kvstore_(kvstore),
-      adminClient_(adminClient),
-      paras_(paras) {}
+ public:
+  MetaJobExecutor(JobID jobId, kvstore::KVStore* kvstore, AdminClient* adminClient,
+                  const std::vector<std::string>& paras)
+      : jobId_(jobId), kvstore_(kvstore), adminClient_(adminClient), paras_(paras) {}
 
-    virtual ~MetaJobExecutor() = default;
+  virtual ~MetaJobExecutor() = default;
 
-    // Check the arguments about the job.
-    virtual bool check() = 0;
+  // Check the arguments about the job.
+  virtual bool check() = 0;
 
-    // Prepare the Job info from the arguments.
-    virtual cpp2::ErrorCode prepare() = 0;
+  // Prepare the Job info from the arguments.
+  virtual cpp2::ErrorCode prepare() = 0;
 
-    // The skeleton to run the job.
-    // You should rewrite the executeInternal to trigger the calling.
-    cpp2::ErrorCode  execute();
+  // The skeleton to run the job.
+  // You should rewrite the executeInternal to trigger the calling.
+  cpp2::ErrorCode execute();
 
-    void interruptExecution(JobID jobId);
+  void interruptExecution(JobID jobId);
 
-    // Stop the job when the user cancel it.
-    virtual cpp2::ErrorCode stop() = 0;
+  // Stop the job when the user cancel it.
+  virtual cpp2::ErrorCode stop() = 0;
 
-    virtual void finish(bool) {}
+  virtual void finish(bool) {}
 
-    void setSpaceId(GraphSpaceID spaceId) { space_ = spaceId; }
+  void setSpaceId(GraphSpaceID spaceId) { space_ = spaceId; }
 
-    virtual cpp2::ErrorCode saveSpecialTaskStatus(const cpp2::ReportTaskReq&) {
-        return cpp2::ErrorCode::SUCCEEDED;
-    }
+  virtual cpp2::ErrorCode saveSpecialTaskStatus(const cpp2::ReportTaskReq&) { return cpp2::ErrorCode::SUCCEEDED; }
 
-protected:
-    ErrorOr<cpp2::ErrorCode, GraphSpaceID>
-    getSpaceIdFromName(const std::string& spaceName);
+ protected:
+  ErrorOr<cpp2::ErrorCode, GraphSpaceID> getSpaceIdFromName(const std::string& spaceName);
 
-    ErrOrHosts getTargetHost(GraphSpaceID space);
+  ErrOrHosts getTargetHost(GraphSpaceID space);
 
-    ErrOrHosts getLeaderHost(GraphSpaceID space);
+  ErrOrHosts getLeaderHost(GraphSpaceID space);
 
-    virtual folly::Future<Status>
-    executeInternal(HostAddr&& address, std::vector<PartitionID>&& parts) = 0;
+  virtual folly::Future<Status> executeInternal(HostAddr&& address, std::vector<PartitionID>&& parts) = 0;
 
-protected:
-    JobID                       jobId_{INT_MIN};
-    TaskID                      taskId_{0};
-    kvstore::KVStore*           kvstore_{nullptr};
-    AdminClient*                adminClient_{nullptr};
-    GraphSpaceID                space_;
-    std::vector<std::string>    paras_;
-    bool                        toLeader_{false};
-    int32_t                     concurrency_{INT_MAX};
-    bool                        stopped_{false};
-    std::mutex                  muInterrupt_;
-    std::condition_variable     condInterrupt_;
+ protected:
+  JobID jobId_{INT_MIN};
+  TaskID taskId_{0};
+  kvstore::KVStore* kvstore_{nullptr};
+  AdminClient* adminClient_{nullptr};
+  GraphSpaceID space_;
+  std::vector<std::string> paras_;
+  bool toLeader_{false};
+  int32_t concurrency_{INT_MAX};
+  bool stopped_{false};
+  std::mutex muInterrupt_;
+  std::condition_variable condInterrupt_;
 };
 
 class MetaJobExecutorFactory {
-public:
-    static std::unique_ptr<MetaJobExecutor>
-    createMetaJobExecutor(const JobDescription& jd,
-                          kvstore::KVStore* store,
-                          AdminClient* client);
+ public:
+  static std::unique_ptr<MetaJobExecutor> createMetaJobExecutor(const JobDescription& jd, kvstore::KVStore* store,
+                                                                AdminClient* client);
 };
 
 }  // namespace meta

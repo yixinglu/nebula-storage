@@ -4,50 +4,46 @@
  * attached with Common Clause Condition 1.0, found in the LICENSES directory.
  */
 
+#include "meta/processors/jobMan/SimpleConcurrentJobExecutor.h"
+
 #include "meta/MetaServiceUtils.h"
 #include "meta/processors/admin/AdminClient.h"
-#include "meta/processors/jobMan/SimpleConcurrentJobExecutor.h"
 
 namespace nebula {
 namespace meta {
 
-SimpleConcurrentJobExecutor::
-SimpleConcurrentJobExecutor(JobID jobId,
-                            kvstore::KVStore* kvstore,
-                            AdminClient* adminClient,
-                            const std::vector<std::string>& paras)
+SimpleConcurrentJobExecutor::SimpleConcurrentJobExecutor(JobID jobId, kvstore::KVStore* kvstore,
+                                                         AdminClient* adminClient,
+                                                         const std::vector<std::string>& paras)
     : MetaJobExecutor(jobId, kvstore, adminClient, paras) {}
 
 bool SimpleConcurrentJobExecutor::check() {
-    auto parasNum = paras_.size();
-    return parasNum == 1 || parasNum == 2;
+  auto parasNum = paras_.size();
+  return parasNum == 1 || parasNum == 2;
 }
 
-cpp2::ErrorCode
-SimpleConcurrentJobExecutor::prepare() {
-    std::string spaceName = paras_.back();
-    auto errOrSpaceId = getSpaceIdFromName(spaceName);
-    if (!nebula::ok(errOrSpaceId)) {
-        LOG(ERROR) << "Can't find the space: " << spaceName;
-        return nebula::error(errOrSpaceId);
-    }
+cpp2::ErrorCode SimpleConcurrentJobExecutor::prepare() {
+  std::string spaceName = paras_.back();
+  auto errOrSpaceId = getSpaceIdFromName(spaceName);
+  if (!nebula::ok(errOrSpaceId)) {
+    LOG(ERROR) << "Can't find the space: " << spaceName;
+    return nebula::error(errOrSpaceId);
+  }
 
-    space_ = nebula::value(errOrSpaceId);
-    ErrOrHosts errOrHost = getTargetHost(space_);
-    if (!nebula::ok(errOrHost)) {
-        LOG(ERROR) << "Can't get any host according to space";
-        return nebula::error(errOrHost);
-    }
+  space_ = nebula::value(errOrSpaceId);
+  ErrOrHosts errOrHost = getTargetHost(space_);
+  if (!nebula::ok(errOrHost)) {
+    LOG(ERROR) << "Can't get any host according to space";
+    return nebula::error(errOrHost);
+  }
 
-    if (paras_.size() > 1) {
-        concurrency_ = std::atoi(paras_[0].c_str());
-    }
-    return cpp2::ErrorCode::SUCCEEDED;
+  if (paras_.size() > 1) {
+    concurrency_ = std::atoi(paras_[0].c_str());
+  }
+  return cpp2::ErrorCode::SUCCEEDED;
 }
 
-cpp2::ErrorCode SimpleConcurrentJobExecutor::stop() {
-    return cpp2::ErrorCode::SUCCEEDED;
-}
+cpp2::ErrorCode SimpleConcurrentJobExecutor::stop() { return cpp2::ErrorCode::SUCCEEDED; }
 
 }  // namespace meta
 }  // namespace nebula
